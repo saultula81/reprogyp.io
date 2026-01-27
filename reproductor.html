@@ -1,0 +1,483 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Gracia y Paz - Radio & Player</title>
+    <style>
+        :root {
+            --primary-bg: #0f172a;
+            --secondary-bg: #1e293b;
+            --accent-color: #38bdf8;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --glass: rgba(255, 255, 255, 0.05);
+            --glass-border: rgba(255, 255, 255, 0.1);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            background-color: var(--primary-bg);
+            color: var(--text-main);
+            height: 100vh;
+            width: 100vw;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            transition: all 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+            padding: 0;
+            margin: 0;
+        }
+
+        body.playing {
+            height: auto;
+            min-height: 100vh;
+            justify-content: flex-start;
+            overflow-y: auto;
+            padding: 1rem 0;
+        }
+
+        header {
+            width: 100%;
+            padding: 1.5rem 1rem;
+            text-align: center;
+            display: none;
+            opacity: 0;
+            transform: translateY(-20px);
+            transition: all 0.8s ease;
+        }
+
+        body.playing header {
+            display: block;
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        h1 {
+            font-size: 1.8rem;
+            font-weight: 800;
+            letter-spacing: -0.05em;
+            background: linear-gradient(to right, #38bdf8, #818cf8, #38bdf8);
+            background-size: 200% auto;
+            animation: shine 3s linear infinite;
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        @keyframes shine {
+            to {
+                background-position: 200% center;
+            }
+        }
+
+        .slider-container {
+            position: relative;
+            width: 95%;
+            max-width: 1000px;
+            aspect-ratio: 16 / 9;
+            margin: 0 auto;
+            border-radius: 1.5rem;
+            overflow: hidden;
+            box-shadow: 0 40px 100px -20px rgba(0, 0, 0, 0.8);
+            background: var(--secondary-bg);
+            border: 1px solid var(--glass-border);
+            display: none;
+            opacity: 0;
+            transform: scale(0.95);
+            transition: all 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        body.playing .slider-container {
+            display: block;
+            opacity: 1;
+            transform: scale(1);
+            margin-top: 0.5rem;
+        }
+
+        .slides {
+            display: flex;
+            height: 100%;
+            transition: transform 0.8s cubic-bezier(0.6, 0.05, 0.01, 0.9);
+        }
+
+        .slide {
+            min-width: 100%;
+            height: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background-size: contain;
+            background-repeat: no-repeat;
+            background-position: center;
+        }
+
+        .controls {
+            position: absolute;
+            top: 50%;
+            left: 0;
+            right: 0;
+            transform: translateY(-50%);
+            display: flex;
+            justify-content: space-between;
+            padding: 0 0.5rem;
+            pointer-events: none;
+        }
+
+        .control-btn {
+            width: 2.5rem;
+            height: 2.5rem;
+            border-radius: 50%;
+            background: rgba(15, 23, 42, 0.6);
+            border: 1px solid var(--glass-border);
+            color: white;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            pointer-events: auto;
+            backdrop-filter: blur(4px);
+        }
+
+        .info-overlay {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            padding: 1rem;
+            background: linear-gradient(transparent, rgba(15, 23, 42, 0.95));
+            backdrop-filter: blur(4px);
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .img-name {
+            font-size: 0.9rem;
+            font-weight: 700;
+            color: var(--text-main);
+        }
+
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem 1rem;
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            font-weight: 800;
+            text-transform: uppercase;
+            text-decoration: none;
+            color: white;
+            background: linear-gradient(45deg, #25d366, #128c7e);
+            width: fit-content;
+        }
+
+        /* VU Meter */
+        .vumeter {
+            display: flex;
+            align-items: flex-end;
+            gap: 10px;
+            height: 100px;
+            width: 180px;
+            margin-bottom: 2rem;
+        }
+
+        body.playing .vumeter {
+            height: 30px;
+            width: 50px;
+            gap: 3px;
+            margin-bottom: 0;
+        }
+
+        .vu-bar {
+            width: 8px;
+            background: var(--accent-color);
+            border-radius: 4px;
+            animation: bounce 1s ease-in-out infinite;
+        }
+
+        body.playing .vu-bar {
+            width: 4px;
+        }
+
+        .vu-bar:nth-child(1) {
+            height: 40%;
+            animation-delay: 0.1s;
+        }
+
+        .vu-bar:nth-child(2) {
+            height: 70%;
+            animation-delay: 0.3s;
+        }
+
+        .vu-bar:nth-child(3) {
+            height: 100%;
+            animation-delay: 0.2s;
+        }
+
+        .vu-bar:nth-child(4) {
+            height: 60%;
+            animation-delay: 0.4s;
+        }
+
+        @keyframes bounce {
+
+            0%,
+            100% {
+                transform: scaleY(1);
+            }
+
+            50% {
+                transform: scaleY(0.4);
+            }
+        }
+
+        /* Radio Footer / Hero State */
+        .radio-footer {
+            width: 90%;
+            max-width: 600px;
+            padding: 4rem 2rem;
+            background: rgba(30, 41, 59, 0.9);
+            border: 3px solid var(--accent-color);
+            border-radius: 3rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 2rem;
+            transition: all 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 30px 60px rgba(0, 0, 0, 0.6);
+        }
+
+        body.playing .radio-footer {
+            width: 95%;
+            max-width: 800px;
+            padding: 1rem 1.5rem;
+            flex-direction: row;
+            margin: 1.5rem auto;
+            border: 1px solid var(--glass-border);
+            border-radius: 1.5rem;
+            background: var(--secondary-bg);
+            gap: 1rem;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+        }
+
+        .radio-info {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+        }
+
+        body.playing .radio-info {
+            flex-grow: 1;
+            flex-direction: row;
+            text-align: left;
+            gap: 1rem;
+        }
+
+        .radio-title {
+            font-size: 2rem;
+            font-weight: 900;
+            color: var(--accent-color);
+            margin-bottom: 0.5rem;
+        }
+
+        body.playing .radio-title {
+            font-size: 1rem;
+            margin-bottom: 0;
+        }
+
+        .radio-status {
+            font-size: 1.1rem;
+            color: var(--text-muted);
+        }
+
+        body.playing .radio-status {
+            font-size: 0.8rem;
+        }
+
+        /* Large Audio Player for Android */
+        #audio-container {
+            width: 100%;
+            display: flex;
+            justify-content: center;
+        }
+
+        audio {
+            width: 100%;
+            height: 70px;
+            filter: invert(100%) hue-rotate(180deg) brightness(1.5);
+            border-radius: 1rem;
+        }
+
+        body.playing audio {
+            height: 45px;
+            max-width: 250px;
+        }
+
+        .dots {
+            display: flex;
+            justify-content: center;
+            gap: 0.5rem;
+            margin: 1rem 0;
+        }
+
+        .dot {
+            width: 0.5rem;
+            height: 0.5rem;
+            border-radius: 50%;
+            background: var(--glass-border);
+            transition: all 0.3s;
+        }
+
+        .dot.active {
+            background: var(--accent-color);
+            width: 1.2rem;
+            border-radius: 9999px;
+        }
+
+        @media (max-width: 480px) {
+            .radio-title {
+                font-size: 1.5rem;
+            }
+
+            .radio-footer {
+                padding: 3rem 1rem;
+            }
+
+            audio {
+                height: 60px;
+            }
+
+            h1 {
+                font-size: 1.5rem;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <header>
+        <h1>GRACIA Y PAZ RADIO</h1>
+    </header>
+
+    <div class="slider-container">
+        <div class="slides" id="slides-container"></div>
+        <div class="controls">
+            <button class="control-btn" onclick="prevSlide()">❮</button>
+            <button class="control-btn" onclick="nextSlide()">❯</button>
+        </div>
+        <div class="info-overlay">
+            <div id="badge-container"></div>
+            <p class="img-name" id="current-name">Cargando...</p>
+        </div>
+    </div>
+
+    <div class="dots" id="dots-container"></div>
+
+    <div class="radio-footer">
+        <div class="radio-info">
+            <div class="vumeter">
+                <div class="vu-bar"></div>
+                <div class="vu-bar"></div>
+                <div class="vu-bar"></div>
+                <div class="vu-bar"></div>
+            </div>
+            <div>
+                <p class="radio-title">GRACIA Y PAZ</p>
+                <p class="radio-status">Toca PLAY para iniciar</p>
+            </div>
+        </div>
+        <div id="audio-container">
+            <audio id="radio-player" controls src="https://stream.zeno.fm/mfer4shs398uv"></audio>
+        </div>
+    </div>
+
+    <script>
+        const images = [
+            { name: "1mas2.png", type: "1mas2" },
+            { name: "1mas2bl.png", type: "1mas2" },
+            { name: "consola ten confianza.png", type: "jose" },
+            { name: "hno jose (1).jpg", type: "jose" },
+            { name: "hno jose (2).jpg", type: "jose" }
+        ];
+
+        let currentIndex = 0;
+
+        function renderSlider() {
+            const container = document.getElementById('slides-container');
+            const dotsContainer = document.getElementById('dots-container');
+
+            container.innerHTML = '';
+            dotsContainer.innerHTML = '';
+
+            images.forEach((img, index) => {
+                const slide = document.createElement('div');
+                slide.className = 'slide';
+                slide.style.backgroundImage = `url('${img.name}')`;
+                container.appendChild(slide);
+
+                const dot = document.createElement('div');
+                dot.className = index === 0 ? 'dot active' : 'dot';
+                dot.onclick = () => goToSlide(index);
+                dotsContainer.appendChild(dot);
+            });
+
+            updateSlidePosition();
+        }
+
+        function updateSlidePosition() {
+            const container = document.getElementById('slides-container');
+            container.style.transform = `translateX(-${currentIndex * 100}%)`;
+
+            const dots = document.querySelectorAll('.dot');
+            dots.forEach((dot, index) => dot.classList.toggle('active', index === currentIndex));
+
+            const badgeContainer = document.getElementById('badge-container');
+            const nameLabel = document.getElementById('current-name');
+            badgeContainer.innerHTML = '';
+
+            if (images[currentIndex]) {
+                const is1mas2 = images[currentIndex].type === '1mas2';
+                nameLabel.innerText = `${is1mas2 ? '1 Mas 2' : 'Ten Confianza'} - ${images[currentIndex].name}`;
+
+                const badge = document.createElement('a');
+                badge.target = "_blank";
+                badge.className = 'badge';
+                if (is1mas2) {
+                    badge.href = "https://wa.me/54115466508379";
+                    badge.innerHTML = '<span>📱 WhatsApp 1 Mas 2</span>';
+                } else {
+                    badge.href = "https://wa.me/543442408551";
+                    badge.innerHTML = '<span>📱 Contacto Ten Confianza</span>';
+                }
+                badgeContainer.appendChild(badge);
+            }
+        }
+
+        function nextSlide() { currentIndex = (currentIndex + 1) % images.length; updateSlidePosition(); }
+        function prevSlide() { currentIndex = (currentIndex - 1 + images.length) % images.length; updateSlidePosition(); }
+        function goToSlide(index) { currentIndex = index; updateSlidePosition(); }
+
+        const radioPlayer = document.getElementById('radio-player');
+        radioPlayer.addEventListener('play', () => document.body.classList.add('playing'));
+
+        setInterval(nextSlide, 5000);
+        renderSlider();
+    </script>
+</body>
+
+</html>
