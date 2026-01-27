@@ -348,6 +348,59 @@
             border-radius: 9999px;
         }
 
+        /* Marquee Styles */
+        .marquee-container {
+            width: 100%;
+            background: rgba(15, 23, 42, 0.8);
+            backdrop-filter: blur(10px);
+            border-top: 1px solid var(--glass-border);
+            border-bottom: 1px solid var(--glass-border);
+            padding: 0.8rem 0;
+            overflow: hidden;
+            display: none;
+            opacity: 0;
+            transform: translateY(20px);
+            transition: all 0.8s ease;
+            margin-top: 1rem;
+        }
+
+        body.playing .marquee-container {
+            display: block;
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .marquee-content {
+            display: inline-block;
+            white-space: nowrap;
+            animation: marquee 30s linear infinite;
+            padding-left: 100%;
+        }
+
+        .marquee-item {
+            display: inline-block;
+            padding: 0 3rem;
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: var(--text-main);
+            letter-spacing: 0.05em;
+        }
+
+        .marquee-item span {
+            color: var(--accent-color);
+            font-weight: 800;
+        }
+
+        @keyframes marquee {
+            0% {
+                transform: translateX(0);
+            }
+
+            100% {
+                transform: translateX(-100%);
+            }
+        }
+
         @media (max-width: 480px) {
             .radio-title {
                 font-size: 1.5rem;
@@ -402,6 +455,12 @@
         </div>
         <div id="audio-container">
             <audio id="radio-player" controls src="https://stream.zeno.fm/mfer4shs398uv"></audio>
+        </div>
+    </div>
+
+    <div class="marquee-container">
+        <div class="marquee-content" id="marquee-text">
+            <!-- Phrases will be inserted here by JS -->
         </div>
     </div>
 
@@ -472,8 +531,22 @@
         const radioPlayer = document.getElementById('radio-player');
         radioPlayer.addEventListener('play', () => document.body.classList.add('playing'));
 
+        function initMarquee() {
+            const marqueeContainer = document.getElementById('marquee-text');
+            const phrases = [
+                "<span>1 MAS 2</span> PRÓXIMAMENTE EN NUESTRA RADIO",
+                "<span>TEN CONFIANZA</span> LOS DÍAS LUNES DESDE LAS 22 HS CONDUCE HERMANO JOSE PASIEKA",
+                "<span>PROGRAMACIONES ESPECIALES</span> QUEDATE ATENTO A NUESTROS PROGRAMAS ESPECIALES QUE SE ANUNCIAN EN NUESTRAS REDES"
+            ];
+
+            // Triple the phrases to ensure no gaps during long scrolls
+            const content = phrases.map(phrase => `<div class="marquee-item">${phrase}</div>`).join('');
+            marqueeContainer.innerHTML = content + content + content;
+        }
+
         setInterval(nextSlide, 5000);
         renderSlider();
+        initMarquee();
     </script>
 </body>
 
