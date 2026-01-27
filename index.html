@@ -5,6 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Gracia y Paz - Radio & Player</title>
+    <!-- Version 1.2 - Reset Cache -->
     <style>
         :root {
             --primary-bg: #0f172a;
@@ -348,8 +349,8 @@
             border-radius: 9999px;
         }
 
-        /* Text Slider Styles */
-        .text-slider-container {
+        /* Phrases Slider Styles (Renamed to force cache reset) */
+        .frases-slider-container {
             width: 100%;
             background: rgba(15, 23, 42, 0.8);
             backdrop-filter: blur(10px);
@@ -365,18 +366,18 @@
             position: relative;
         }
 
-        body.playing .text-slider-container {
+        body.playing .frases-slider-container {
             display: block;
             opacity: 1;
             transform: translateY(0);
         }
 
-        .text-slides {
+        .frases-slides {
             display: flex;
             transition: transform 0.8s cubic-bezier(0.6, 0.05, 0.01, 0.9);
         }
 
-        .text-slide {
+        .frases-slide {
             min-width: 100%;
             padding: 0 1.5rem;
             text-align: center;
@@ -390,7 +391,7 @@
             align-items: center;
         }
 
-        .text-slide span {
+        .frases-slide span {
             color: var(--accent-color);
             font-weight: 800;
             margin-right: 0.3rem;
@@ -453,8 +454,8 @@
         </div>
     </div>
 
-    <div class="text-slider-container">
-        <div class="text-slides" id="text-slides-container">
+    <div class="frases-slider-container">
+        <div class="frases-slides" id="frases-slides-container">
             <!-- Phrases will be inserted here by JS -->
         </div>
     </div>
@@ -550,13 +551,13 @@
         radioPlayer.addEventListener('play', () => document.body.classList.add('playing'));
 
         function initTextSlider() {
-            const container = document.getElementById('text-slides-container');
-            container.innerHTML = phrases.map(phrase => `<div class="text-slide">${phrase}</div>`).join('');
+            const container = document.getElementById('frases-slides-container');
+            container.innerHTML = phrases.map(phrase => `<div class="frases-slide">${phrase}</div>`).join('');
             updateTextSlider();
         }
 
         function updateTextSlider() {
-            const container = document.getElementById('text-slides-container');
+            const container = document.getElementById('frases-slides-container');
             container.style.transform = `translateX(-${textIndex * 100}%)`;
         }
 
