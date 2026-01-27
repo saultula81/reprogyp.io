@@ -348,57 +348,52 @@
             border-radius: 9999px;
         }
 
-        /* Marquee Styles */
-        .marquee-container {
+        /* Text Slider Styles */
+        .text-slider-container {
             width: 100%;
             background: rgba(15, 23, 42, 0.8);
             backdrop-filter: blur(10px);
             border-top: 1px solid var(--glass-border);
             border-bottom: 1px solid var(--glass-border);
-            padding: 0.8rem 0;
+            padding: 1.2rem 0;
             overflow: hidden;
             display: none;
             opacity: 0;
             transform: translateY(20px);
             transition: all 0.8s ease;
             margin-top: 1rem;
+            position: relative;
         }
 
-        body.playing .marquee-container {
+        body.playing .text-slider-container {
             display: block;
             opacity: 1;
             transform: translateY(0);
         }
 
-        .marquee-content {
-            display: inline-block;
-            white-space: nowrap;
-            animation: marquee 30s linear infinite;
-            padding-left: 100%;
+        .text-slides {
+            display: flex;
+            transition: transform 0.8s cubic-bezier(0.6, 0.05, 0.01, 0.9);
         }
 
-        .marquee-item {
-            display: inline-block;
-            padding: 0 3rem;
+        .text-slide {
+            min-width: 100%;
+            padding: 0 1.5rem;
+            text-align: center;
             font-size: 1.1rem;
             font-weight: 600;
             color: var(--text-main);
-            letter-spacing: 0.05em;
+            letter-spacing: 0.02em;
+            line-height: 1.4;
+            display: flex;
+            justify-content: center;
+            align-items: center;
         }
 
-        .marquee-item span {
+        .text-slide span {
             color: var(--accent-color);
             font-weight: 800;
-        }
-
-        @keyframes marquee {
-            0% {
-                transform: translateX(0);
-            }
-
-            100% {
-                transform: translateX(-100%);
-            }
+            margin-right: 0.3rem;
         }
 
         @media (max-width: 480px) {
@@ -458,8 +453,8 @@
         </div>
     </div>
 
-    <div class="marquee-container">
-        <div class="marquee-content" id="marquee-text">
+    <div class="text-slider-container">
+        <div class="text-slides" id="text-slides-container">
             <!-- Phrases will be inserted here by JS -->
         </div>
     </div>
@@ -474,6 +469,12 @@
         ];
 
         let currentIndex = 0;
+        let textIndex = 0;
+        const phrases = [
+            "<span>1 MAS 2</span> PRÓXIMAMENTE EN NUESTRA RADIO",
+            "<span>TEN CONFIANZA</span> LOS DÍAS LUNES DESDE LAS 22 HS CONDUCE HERMANO JOSE PASIEKA",
+            "<span>PROGRAMACIONES ESPECIALES</span> QUEDATE ATENTO A NUESTROS PROGRAMAS ESPECIALES QUE SE ANUNCIAN EN NUESTRAS REDES"
+        ];
 
         function renderSlider() {
             const container = document.getElementById('slides-container');
@@ -524,29 +525,44 @@
             }
         }
 
-        function nextSlide() { currentIndex = (currentIndex + 1) % images.length; updateSlidePosition(); }
-        function prevSlide() { currentIndex = (currentIndex - 1 + images.length) % images.length; updateSlidePosition(); }
-        function goToSlide(index) { currentIndex = index; updateSlidePosition(); }
+        function nextSlide() {
+            currentIndex = (currentIndex + 1) % images.length;
+            textIndex = (textIndex + 1) % phrases.length;
+            updateSlidePosition();
+            updateTextSlider();
+        }
+
+        function prevSlide() {
+            currentIndex = (currentIndex - 1 + images.length) % images.length;
+            textIndex = (textIndex - 1 + phrases.length) % phrases.length;
+            updateSlidePosition();
+            updateTextSlider();
+        }
+
+        function goToSlide(index) {
+            currentIndex = index;
+            // When jumping to a specific image slide, we just continue the text cycle or try to match? 
+            // Matching might be confusing if counts differ. Let's just keep them moving.
+            updateSlidePosition();
+        }
 
         const radioPlayer = document.getElementById('radio-player');
         radioPlayer.addEventListener('play', () => document.body.classList.add('playing'));
 
-        function initMarquee() {
-            const marqueeContainer = document.getElementById('marquee-text');
-            const phrases = [
-                "<span>1 MAS 2</span> PRÓXIMAMENTE EN NUESTRA RADIO",
-                "<span>TEN CONFIANZA</span> LOS DÍAS LUNES DESDE LAS 22 HS CONDUCE HERMANO JOSE PASIEKA",
-                "<span>PROGRAMACIONES ESPECIALES</span> QUEDATE ATENTO A NUESTROS PROGRAMAS ESPECIALES QUE SE ANUNCIAN EN NUESTRAS REDES"
-            ];
+        function initTextSlider() {
+            const container = document.getElementById('text-slides-container');
+            container.innerHTML = phrases.map(phrase => `<div class="text-slide">${phrase}</div>`).join('');
+            updateTextSlider();
+        }
 
-            // Triple the phrases to ensure no gaps during long scrolls
-            const content = phrases.map(phrase => `<div class="marquee-item">${phrase}</div>`).join('');
-            marqueeContainer.innerHTML = content + content + content;
+        function updateTextSlider() {
+            const container = document.getElementById('text-slides-container');
+            container.style.transform = `translateX(-${textIndex * 100}%)`;
         }
 
         setInterval(nextSlide, 5000);
         renderSlider();
-        initMarquee();
+        initTextSlider();
     </script>
 </body>
 
