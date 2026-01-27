@@ -382,7 +382,6 @@
         </div>
         <div class="info-overlay">
             <div id="badge-container"></div>
-            <p class="img-name" id="current-name">Cargando...</p>
         </div>
     </div>
 
@@ -447,12 +446,10 @@
             dots.forEach((dot, index) => dot.classList.toggle('active', index === currentIndex));
 
             const badgeContainer = document.getElementById('badge-container');
-            const nameLabel = document.getElementById('current-name');
             badgeContainer.innerHTML = '';
 
             if (images[currentIndex]) {
                 const is1mas2 = images[currentIndex].type === '1mas2';
-                nameLabel.innerText = `${is1mas2 ? '1 Mas 2' : 'Ten Confianza'} - ${images[currentIndex].name}`;
 
                 const badge = document.createElement('a');
                 badge.target = "_blank";
