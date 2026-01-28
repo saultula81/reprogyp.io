@@ -462,8 +462,6 @@
 
     <script>
         const images = [
-            { name: "1mas2.png", type: "1mas2" },
-            { name: "1mas2bl.png", type: "1mas2" },
             { name: "consola ten confianza.png", type: "jose" },
             { name: "hno jose (1).jpg", type: "jose" },
             { name: "hno jose (2).jpg", type: "jose" }
@@ -510,18 +508,11 @@
             badgeContainer.innerHTML = '';
 
             if (images[currentIndex]) {
-                const is1mas2 = images[currentIndex].type === '1mas2';
-
                 const badge = document.createElement('a');
                 badge.target = "_blank";
                 badge.className = 'badge';
-                if (is1mas2) {
-                    badge.href = "whatsapp://send?phone=54115466508379";
-                    badge.innerHTML = '<span>📱 WhatsApp 1 Mas 2</span>';
-                } else {
-                    badge.href = "whatsapp://send?phone=543442408551";
-                    badge.innerHTML = '<span>📱 Contacto Ten Confianza</span>';
-                }
+                badge.href = "whatsapp://send?phone=543442408551";
+                badge.innerHTML = '<span>📱 Contacto Ten Confianza</span>';
                 badgeContainer.appendChild(badge);
             }
         }
