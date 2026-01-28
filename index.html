@@ -516,10 +516,10 @@
                 badge.target = "_blank";
                 badge.className = 'badge';
                 if (is1mas2) {
-                    badge.href = "https://wa.me/54115466508379";
+                    badge.href = "whatsapp://send?phone=54115466508379";
                     badge.innerHTML = '<span>📱 WhatsApp 1 Mas 2</span>';
                 } else {
-                    badge.href = "https://wa.me/543442408551";
+                    badge.href = "whatsapp://send?phone=543442408551";
                     badge.innerHTML = '<span>📱 Contacto Ten Confianza</span>';
                 }
                 badgeContainer.appendChild(badge);
@@ -548,7 +548,40 @@
         }
 
         const radioPlayer = document.getElementById('radio-player');
-        radioPlayer.addEventListener('play', () => document.body.classList.add('playing'));
+
+        // Media Session API Implementation
+        function updateMediaSession() {
+            if ('mediaSession' in navigator) {
+                navigator.mediaSession.metadata = new MediaMetadata({
+                    title: 'GRACIA Y PAZ RADIO',
+                    artist: 'Radio en Vivo',
+                    album: 'Gracia y Paz',
+                    artwork: [
+                        { src: '1mas2.png', sizes: '96x96', type: 'image/png' },
+                        { src: '1mas2bl.png', sizes: '128x128', type: 'image/png' },
+                        { src: 'hno jose (1).jpg', sizes: '192x192', type: 'image/jpg' },
+                        { src: 'hno jose (2).jpg', sizes: '512x512', type: 'image/jpg' },
+                    ]
+                });
+
+                navigator.mediaSession.setActionHandler('play', () => { radioPlayer.play(); });
+                navigator.mediaSession.setActionHandler('pause', () => { radioPlayer.pause(); });
+            }
+        }
+
+        radioPlayer.addEventListener('play', () => {
+            document.body.classList.add('playing');
+            updateMediaSession();
+            if ('mediaSession' in navigator) {
+                navigator.mediaSession.playbackState = 'playing';
+            }
+        });
+
+        radioPlayer.addEventListener('pause', () => {
+            if ('mediaSession' in navigator) {
+                navigator.mediaSession.playbackState = 'paused';
+            }
+        });
 
         function initTextSlider() {
             const container = document.getElementById('frases-slides-container');
@@ -558,8 +591,18 @@
 
         function updateTextSlider() {
             const container = document.getElementById('frases-slides-container');
-            container.style.transform = `translateX(-${textIndex * 100}%)`;
+            if (container) {
+                container.style.transform = `translateX(-${textIndex * 100}%)`;
+            }
         }
+
+        // Maintain playback on visibility change if possible
+        document.addEventListener('visibilitychange', () => {
+            if (document.visibilityState === 'hidden' && !radioPlayer.paused) {
+                // Keep playing. Some browsers need a tiny push or just standard MediaSession
+                console.log('App in background, keeping audio alive...');
+            }
+        });
 
         setInterval(nextSlide, 5000);
         renderSlider();
