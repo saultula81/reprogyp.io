@@ -5,7 +5,382 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Ten Confianza - Radio & Player</title>
-    <link rel="stylesheet" href="ten-confianza.module.css">
+    <style>
+        :root {
+            /* Colors - Deep Navy Palette */
+            --clr-primary-bg: #0f172a;
+            --clr-secondary-bg: #1e293b;
+            --clr-accent: #38bdf8;
+            --clr-accent-glow: #818cf8;
+            --clr-text-main: #f8fafc;
+            --clr-text-muted: #94a3b8;
+            
+            /* Glassmorphism */
+            --glass-bg: rgba(255, 255, 255, 0.05);
+            --glass-border: rgba(255, 255, 255, 0.1);
+            --glass-blur: blur(12px);
+            
+            /* Spacing */
+            --spacing-xs: 0.5rem;
+            --spacing-sm: 1rem;
+            --spacing-md: 1.5rem;
+            --spacing-lg: 2rem;
+            --spacing-xl: 4rem;
+            
+            /* Radius */
+            --radius-sm: 0.75rem;
+            --radius-md: 1rem;
+            --radius-lg: 1.5rem;
+            --radius-full: 9999px;
+            
+            /* Transitions */
+            --transition-standard: 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            --transition-slow: 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            background-color: var(--clr-primary-bg);
+            color: var(--clr-text-main);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            overflow-x: hidden;
+            transition: var(--transition-slow);
+        }
+
+        body.playing {
+            justify-content: flex-start;
+            overflow-y: auto;
+            padding: var(--spacing-sm) 0;
+        }
+
+        .header {
+            width: 100%;
+            padding: var(--spacing-md) var(--spacing-sm);
+            text-align: center;
+            display: none;
+            opacity: 0;
+            transform: translateY(-20px);
+            transition: var(--transition-slow);
+        }
+
+        body.playing .header {
+            display: block;
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .header__title {
+            font-size: clamp(1.5rem, 5vw, 1.8rem);
+            font-weight: 800;
+            letter-spacing: -0.05em;
+            background: linear-gradient(to right, var(--clr-accent), var(--clr-accent-glow), var(--clr-accent));
+            background-size: 200% auto;
+            animation: shine 3s linear infinite;
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        @keyframes shine {
+            to { background-position: 200% center; }
+        }
+
+        .slider {
+            position: relative;
+            width: 95%;
+            max-width: 1000px;
+            aspect-ratio: 16 / 9;
+            margin: 0 auto;
+            border-radius: var(--radius-lg);
+            overflow: hidden;
+            box-shadow: 0 40px 100px -20px rgba(0, 0, 0, 0.8);
+            background: var(--clr-secondary-bg);
+            border: 1px solid var(--glass-border);
+            display: none;
+            opacity: 0;
+            transform: scale(0.95);
+            transition: var(--transition-slow);
+        }
+
+        body.playing .slider {
+            display: block;
+            opacity: 1;
+            transform: scale(1);
+            margin-top: var(--spacing-xs);
+        }
+
+        .slider__slides {
+            display: flex;
+            height: 100%;
+            transition: transform var(--transition-slow) cubic-bezier(0.6, 0.05, 0.01, 0.9);
+        }
+
+        .slider__slide {
+            min-width: 100%;
+            height: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background-size: contain;
+            background-repeat: no-repeat;
+            background-position: center;
+        }
+
+        .slider__controls {
+            position: absolute;
+            top: 50%;
+            left: 0;
+            right: 0;
+            transform: translateY(-50%);
+            display: flex;
+            justify-content: space-between;
+            padding: 0 var(--spacing-xs);
+            pointer-events: none;
+        }
+
+        .slider__btn {
+            width: 2.5rem;
+            height: 2.5rem;
+            border-radius: var(--radius-full);
+            background: rgba(15, 23, 42, 0.6);
+            border: 1px solid var(--glass-border);
+            color: white;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            pointer-events: auto;
+            backdrop-filter: var(--glass-blur);
+            transition: var(--transition-standard);
+        }
+
+        .slider__overlay {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            padding: var(--spacing-sm);
+            background: linear-gradient(transparent, rgba(15, 23, 42, 0.95));
+            backdrop-filter: blur(4px);
+        }
+
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            gap: var(--spacing-xs);
+            padding: 0.5rem 1rem;
+            border-radius: var(--radius-full);
+            font-size: 0.75rem;
+            font-weight: 800;
+            text-transform: uppercase;
+            text-decoration: none;
+            color: white;
+            background: linear-gradient(45deg, #25d366, #128c7e);
+            box-shadow: 0 4px 12px rgba(37, 211, 102, 0.3);
+        }
+
+        .player-card {
+            width: 90%;
+            max-width: 600px;
+            padding: var(--spacing-xl) var(--spacing-lg);
+            background: rgba(30, 41, 59, 0.9);
+            border: 3px solid var(--clr-accent);
+            border-radius: 3rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: var(--spacing-lg);
+            transition: var(--transition-slow);
+            box-shadow: 0 30px 60px rgba(0, 0, 0, 0.6);
+        }
+
+        body.playing .player-card {
+            width: 95%;
+            max-width: 800px;
+            padding: var(--spacing-sm) var(--spacing-md);
+            flex-direction: row;
+            margin: var(--spacing-md) auto;
+            border: 1px solid var(--glass-border);
+            border-radius: var(--radius-lg);
+            background: var(--clr-secondary-bg);
+            gap: var(--spacing-sm);
+        }
+
+        .vumeter {
+            display: flex;
+            align-items: flex-end;
+            gap: 10px;
+            height: 100px;
+            width: 180px;
+        }
+
+        body.playing .vumeter {
+            height: 30px;
+            width: 50px;
+            gap: 3px;
+        }
+
+        .vumeter__bar {
+            width: 8px;
+            background: var(--clr-accent);
+            border-radius: 4px;
+            animation: bounce 1s ease-in-out infinite;
+        }
+
+        body.playing .vumeter__bar { width: 4px; }
+
+        @keyframes bounce {
+            0%, 100% { transform: scaleY(1); }
+            50% { transform: scaleY(0.4); }
+        }
+
+        .player-card__info {
+            text-align: center;
+            flex-grow: 1;
+        }
+
+        body.playing .player-card__info {
+            display: flex;
+            align-items: center;
+            text-align: left;
+            gap: var(--spacing-sm);
+        }
+
+        .player-card__title {
+            font-size: 2rem;
+            font-weight: 900;
+            color: var(--clr-accent);
+        }
+
+        body.playing .player-card__title { font-size: 1rem; }
+
+        .player-card__status {
+            font-size: 1.1rem;
+            color: var(--clr-text-muted);
+        }
+
+        body.playing .player-card__status { font-size: 0.8rem; }
+
+        .audio-wrapper {
+            width: 100%;
+            max-width: 300px;
+        }
+
+        audio {
+            width: 100%;
+            height: 60px;
+            filter: invert(100%) hue-rotate(180deg) brightness(1.5);
+            border-radius: var(--radius-sm);
+        }
+
+        .messenger {
+            width: 95%;
+            max-width: 800px;
+            margin: var(--spacing-sm) auto;
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: var(--radius-lg);
+            padding: var(--spacing-md);
+            backdrop-filter: var(--glass-blur);
+            display: none;
+            flex-direction: column;
+            gap: var(--spacing-sm);
+            animation: slideIn 0.8s ease;
+        }
+
+        body.playing .messenger { display: flex; }
+
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .messenger__title {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: var(--clr-accent);
+            text-align: center;
+            margin-bottom: var(--spacing-xs);
+        }
+
+        .messenger__form {
+            display: grid;
+            gap: var(--spacing-sm);
+        }
+
+        .messenger__group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .messenger__label {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--clr-text-muted);
+            padding-left: 0.5rem;
+        }
+
+        .messenger__input, .messenger__textarea {
+            background: var(--clr-primary-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: var(--radius-sm);
+            color: var(--clr-text-main);
+            padding: 0.8rem 1rem;
+            outline: none;
+            transition: var(--transition-standard);
+        }
+
+        .messenger__textarea {
+            resize: none;
+            height: 80px;
+        }
+
+        .messenger__input:focus, .messenger__textarea:focus {
+            border-color: var(--clr-accent);
+            box-shadow: 0 0 0 2px rgba(56, 189, 248, 0.2);
+        }
+
+        .messenger__submit {
+            background: linear-gradient(to right, var(--clr-accent), var(--clr-accent-glow));
+            color: var(--clr-primary-bg);
+            border: none;
+            border-radius: var(--radius-sm);
+            padding: 1rem;
+            font-weight: 800;
+            text-transform: uppercase;
+            cursor: pointer;
+            transition: var(--transition-standard);
+        }
+
+        .messenger__submit:hover {
+            filter: brightness(1.1);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 20px rgba(56, 189, 248, 0.4);
+        }
+
+        .messenger__submit:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        @media (max-width: 480px) {
+            .player-card { padding: var(--spacing-lg) var(--spacing-sm); }
+            .player-card__title { font-size: 1.5rem; }
+        }
+    </style>
 </head>
 
 <body>
@@ -23,10 +398,6 @@
         <div class="slider__overlay">
             <div id="badge-container"></div>
         </div>
-    </div>
-
-    <div class="dots" id="dots-container">
-        <!-- Dots injected by JS -->
     </div>
 
     <main class="player-card">
@@ -73,25 +444,13 @@
 
         function renderSlider() {
             const container = document.getElementById('slides-container');
-            const dotsContainer = document.getElementById('dots-container');
-
             container.innerHTML = '';
-            if (dotsContainer) dotsContainer.innerHTML = '';
-
-            images.forEach((img, index) => {
+            images.forEach((img) => {
                 const slide = document.createElement('div');
                 slide.className = 'slider__slide';
                 slide.style.backgroundImage = `url('${img.name}')`;
                 container.appendChild(slide);
-
-                if (dotsContainer) {
-                    const dot = document.createElement('div');
-                    dot.className = index === 0 ? 'dot active' : 'dot';
-                    dot.onclick = () => goToSlide(index);
-                    dotsContainer.appendChild(dot);
-                }
             });
-
             updateSlidePosition();
         }
 
@@ -103,14 +462,12 @@
             const badgeContainer = document.getElementById('badge-container');
             if (badgeContainer) {
                 badgeContainer.innerHTML = '';
-                if (images[currentIndex]) {
-                    const badge = document.createElement('a');
-                    badge.target = "_blank";
-                    badge.className = 'badge';
-                    badge.href = "whatsapp://send?phone=543442408551";
-                    badge.innerHTML = '<span>📱 Contacto Ten Confianza</span>';
-                    badgeContainer.appendChild(badge);
-                }
+                const badge = document.createElement('a');
+                badge.target = "_blank";
+                badge.className = 'badge';
+                badge.href = "whatsapp://send?phone=543442408551";
+                badge.innerHTML = '<span>📱 Contacto Ten Confianza</span>';
+                badgeContainer.appendChild(badge);
             }
         }
 
@@ -124,49 +481,35 @@
             updateSlidePosition();
         }
 
-        function goToSlide(index) {
-            currentIndex = index;
-            updateSlidePosition();
-        }
-
-        // Audio Logic
         const radioPlayer = document.getElementById('radio-player');
         radioPlayer.addEventListener('play', () => {
             document.body.classList.add('playing');
         });
 
-        // Message Logic
         const messageForm = document.getElementById('message-form');
         const statusDiv = document.getElementById('form-status');
         const submitBtn = document.getElementById('submit-btn');
 
         messageForm.addEventListener('submit', async (e) => {
             e.preventDefault();
-            
             const nombre = document.getElementById('nombre').value;
             const mensaje = document.getElementById('mensaje').value;
-
             submitBtn.disabled = true;
             submitBtn.innerText = "Enviando...";
             statusDiv.innerText = "";
 
             try {
-                // Post directly to the script
                 await fetch(SCRIPT_URL, {
                     method: 'POST',
                     mode: 'no-cors',
                     cache: 'no-cache',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
+                    headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ nombre, mensaje, programa: "Ten Confianza" })
                 });
-
                 statusDiv.style.color = "#25d366";
                 statusDiv.innerText = "¡Mensaje enviado con éxito!";
                 messageForm.reset();
             } catch (error) {
-                console.error("Error:", error);
                 statusDiv.style.color = "#ff4b2b";
                 statusDiv.innerText = "Error al enviar. Intenta de nuevo.";
             } finally {
@@ -179,5 +522,4 @@
         renderSlider();
     </script>
 </body>
-
 </html>
